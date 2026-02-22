@@ -1,15 +1,15 @@
 import axios from 'axios';
 
-// Use environment variable or fallback to localhost
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use environment variable or fallback to Railway URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://metatest-backend-production.up.railway.app/api';
 
 const api = {
   // Run a metamorphic test
   runTest: async (testData) => {
     try {
-      console.log('Sending test data:', testData); // Debug log
+      console.log('Sending test data:', testData);
       const response = await axios.post(`${API_BASE_URL}/tests/run`, testData);
-      console.log('Test response:', response.data); // Debug log
+      console.log('Test response:', response.data);
       return response.data;
     } catch (error) {
       console.error('API Error:', error.response?.data || error.message);
@@ -51,20 +51,39 @@ const api = {
     }
   },
 
-  // 🔴 UPDATE THIS FUNCTION - Search models by task (for More button)
+  // 👇 NEW FUNCTION - Get MR Types
+  getMRTypes: async (category = '') => {
+    try {
+      const url = category 
+        ? `${API_BASE_URL}/tests/mr-types?category=${category}`
+        : `${API_BASE_URL}/tests/mr-types`;
+      const response = await axios.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch MR types:', error);
+      // Fallback to static list if API fails
+      return {
+        success: true,
+        data: [
+          { value: 'SYNONYM', label: 'Synonym Replacement', description: 'Tests semantic consistency', icon: '🔄', color: 'blue' },
+          { value: 'GENDER_SWAP', label: 'Gender Swap', description: 'Fairness & bias check', icon: '⚥', color: 'purple' },
+          { value: 'PUNCTUATION', label: 'Punctuation', description: 'Robustness check', icon: '❗', color: 'yellow' },
+          { value: 'NEGATION', label: 'Negation', description: 'Logical consistency', icon: '🚫', color: 'red' },
+          { value: 'PARAPHRASE', label: 'Paraphrase', description: 'Semantic invariance', icon: '📝', color: 'green' }
+        ]
+      };
+    }
+  },
+
+  // Search models by task
   searchModels: async (task, limit = 5) => {
     try {
-      // Direct Hugging Face API call (more reliable)
       const response = await axios.get(`https://huggingface.co/api/models?pipeline_tag=${task}&sort=downloads&limit=${limit}`);
-      
-      // Transform response to our format
       return response.data.map(model => ({
         id: model.id,
         name: model.id.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         task: task,
-        isDynamic: true,
-        downloads: model.downloads || 0,
-        likes: model.likes || 0
+        isDynamic: true
       }));
     } catch (error) {
       console.error('Search failed:', error);
@@ -72,15 +91,11 @@ const api = {
     }
   },
 
-  // 🟢 NEW FUNCTION 1 - Search models by query (for search input)
+  // Search models by query
   searchModelsByQuery: async (query) => {
     try {
-      // Direct Hugging Face API call
       const response = await axios.get(`https://huggingface.co/api/models?search=${encodeURIComponent(query)}&limit=15`);
-      
-      // Transform response
       return response.data.map(model => {
-        // Determine task from pipeline_tag
         let task = 'unknown';
         if (model.pipeline_tag) {
           if (model.pipeline_tag.includes('sentiment') || model.pipeline_tag.includes('text-classification')) {
@@ -89,76 +104,20 @@ const api = {
             task = 'zero-shot';
           } else if (model.pipeline_tag.includes('text-generation')) {
             task = 'text-generation';
-          } else if (model.pipeline_tag.includes('translation')) {
-            task = 'translation';
-          } else {
-            task = model.pipeline_tag;
           }
         }
-        
         return {
           id: model.id,
           name: model.id.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           task: task,
-          isDynamic: true,
-          downloads: model.downloads || 0,
-          likes: model.likes || 0
+          isDynamic: true
         };
       });
     } catch (error) {
       console.error('Query search failed:', error);
       return [];
     }
-  },
-
-  // 🟢 NEW FUNCTION 2 - Get models by task with dynamic loading
-  getDynamicModels: async (task, limit = 5) => {
-    try {
-      // Try backend first
-      try {
-        const response = await axios.get(`${API_BASE_URL}/tests/models`, {
-          params: { task, includeDynamic: true }
-        });
-        if (response.data.success && response.data.data.length > 0) {
-          return response.data.data;
-        }
-      } catch (backendError) {
-        console.log('Backend fetch failed, trying direct HF API');
-      }
-      
-      // Fallback to direct Hugging Face API
-      return await api.searchModels(task, limit);
-    } catch (error) {
-      console.error('Get dynamic models failed:', error);
-      return [];
-    }
-  },
-  // Add this new function
-getMRTypes: async (category = '') => {
-  try {
-    const url = category 
-      ? `${API_BASE_URL}/tests/mr-types?category=${category}`
-      : `${API_BASE_URL}/tests/mr-types`;
-    const response = await axios.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to fetch MR types:', error);
-    // Fallback to static list
-    return {
-      success: true,
-      data: [
-        { value: 'SYNONYM', label: 'Synonym Replacement', icon: '🔄' },
-        { value: 'GENDER_SWAP', label: 'Gender Swap', icon: '⚥' },
-        { value: 'PUNCTUATION', label: 'Punctuation', icon: '❗' },
-        { value: 'NEGATION', label: 'Negation', icon: '🚫' },
-        { value: 'PARAPHRASE', label: 'Paraphrase', icon: '📝' }
-      ]
-    };
   }
-},
-
-  
 };
-
 
 export default api;

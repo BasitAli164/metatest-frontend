@@ -29,30 +29,9 @@ const TestInput = ({ onSubmit, isLoading, selectedModel }) => {
       if (response.success && response.data.length > 0) {
         setMrTypes(response.data);
         setMrType(response.data[0].value); // Set first as default
-      } else {
-        // Fallback to static list if API fails
-        const fallbackTypes = [
-          { value: 'SYNONYM', label: 'Synonym Replacement', description: 'Tests semantic consistency by replacing words with synonyms', icon: '🔄', color: 'blue' },
-          { value: 'GENDER_SWAP', label: 'Gender Swap', description: 'Fairness & bias check by swapping gender-specific terms', icon: '⚥', color: 'purple' },
-          { value: 'PUNCTUATION', label: 'Punctuation Perturbation', description: 'Robustness check by modifying punctuation', icon: '❗', color: 'yellow' },
-          { value: 'NEGATION', label: 'Negation', description: 'Logical consistency by adding/removing negation', icon: '🚫', color: 'red' },
-          { value: 'PARAPHRASE', label: 'Paraphrase', description: 'Semantic invariance through rephrasing', icon: '📝', color: 'green' }
-        ];
-        setMrTypes(fallbackTypes);
-        setMrType(fallbackTypes[0].value);
       }
     } catch (error) {
       console.error('Error fetching MR types:', error);
-      // Fallback static list
-      const fallbackTypes = [
-        { value: 'SYNONYM', label: 'Synonym Replacement', description: 'Tests semantic consistency by replacing words with synonyms', icon: '🔄', color: 'blue' },
-        { value: 'GENDER_SWAP', label: 'Gender Swap', description: 'Fairness & bias check by swapping gender-specific terms', icon: '⚥', color: 'purple' },
-        { value: 'PUNCTUATION', label: 'Punctuation Perturbation', description: 'Robustness check by modifying punctuation', icon: '❗', color: 'yellow' },
-        { value: 'NEGATION', label: 'Negation', description: 'Logical consistency by adding/removing negation', icon: '🚫', color: 'red' },
-        { value: 'PARAPHRASE', label: 'Paraphrase', description: 'Semantic invariance through rephrasing', icon: '📝', color: 'green' }
-      ];
-      setMrTypes(fallbackTypes);
-      setMrType(fallbackTypes[0].value);
     } finally {
       setLoadingMrTypes(false);
     }
@@ -95,8 +74,14 @@ const TestInput = ({ onSubmit, isLoading, selectedModel }) => {
       yellow: 'from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 text-yellow-400',
       red: 'from-red-500/20 to-red-600/20 border-red-500/30 text-red-400',
       green: 'from-green-500/20 to-green-600/20 border-green-500/30 text-green-400',
-      orange: 'from-orange-500/20 to-orange-600/20 border-orange-500/30 text-orange-400',
       pink: 'from-pink-500/20 to-pink-600/20 border-pink-500/30 text-pink-400',
+      orange: 'from-orange-500/20 to-orange-600/20 border-orange-500/30 text-orange-400',
+      indigo: 'from-indigo-500/20 to-indigo-600/20 border-indigo-500/30 text-indigo-400',
+      teal: 'from-teal-500/20 to-teal-600/20 border-teal-500/30 text-teal-400',
+      cyan: 'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30 text-cyan-400',
+      slate: 'from-slate-500/20 to-slate-600/20 border-slate-500/30 text-slate-400',
+      violet: 'from-violet-500/20 to-violet-600/20 border-violet-500/30 text-violet-400',
+      amber: 'from-amber-500/20 to-amber-600/20 border-amber-500/30 text-amber-400'
     };
     return colorMap[color] || 'from-gray-500/20 to-gray-600/20 border-gray-500/30 text-gray-400';
   };
@@ -157,7 +142,7 @@ const TestInput = ({ onSubmit, isLoading, selectedModel }) => {
                     <span className="text-2xl">{selectedMR.icon}</span>
                     <div>
                       <p className="font-medium text-white">{selectedMR.label}</p>
-                      <p className="text-xs text-gray-400 mt-1">{selectedMR.description}</p>
+                      <p className="text-xs text-gray-400 mt-1 line-clamp-1">{selectedMR.description}</p>
                     </div>
                   </div>
                 ) : (
@@ -189,7 +174,7 @@ const TestInput = ({ onSubmit, isLoading, selectedModel }) => {
                             setIsDropdownOpen(false);
                           }}
                           className={`w-full p-4 text-left hover:bg-gray-700/50 transition-all duration-200 border-b border-gray-700 last:border-0 ${
-                            mrType === type.value ? `bg-${type.color}-900/20` : ''
+                            mrType === type.value ? 'bg-primary-900/20' : ''
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -198,13 +183,17 @@ const TestInput = ({ onSubmit, isLoading, selectedModel }) => {
                               <div className="flex items-center justify-between">
                                 <h4 className="font-medium text-white">{type.label}</h4>
                                 {mrType === type.value && (
-                                  <CheckCircle className={`w-5 h-5 text-${type.color}-500`} />
+                                  <CheckCircle className="w-5 h-5 text-primary-500" />
                                 )}
                               </div>
                               <p className="text-xs text-gray-400 mt-1">{type.description}</p>
                               
-                              {/* Color indicator */}
-                              <div className={`mt-2 w-16 h-1 rounded-full bg-gradient-to-r ${getColorClasses(type.color).split(' ')[0]}`}></div>
+                              {/* Category badge */}
+                              <div className="mt-2 flex items-center space-x-2">
+                                <span className={`px-2 py-0.5 rounded-full text-xs bg-${type.color}-900/50 text-${type.color}-300 border border-${type.color}-700/50`}>
+                                  {type.category || 'general'}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </button>
@@ -237,6 +226,7 @@ const TestInput = ({ onSubmit, isLoading, selectedModel }) => {
                 <div>
                   <p className="text-sm font-medium">About this transformation:</p>
                   <p className="text-xs mt-1 opacity-90">{selectedMR.description}</p>
+                  <p className="text-xs mt-2 opacity-75">Category: {selectedMR.category || 'general'}</p>
                 </div>
               </div>
             </div>
