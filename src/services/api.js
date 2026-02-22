@@ -51,15 +51,85 @@ const api = {
     }
   },
 
-  // Search models (for load more functionality)
+  // 🔴 UPDATE THIS FUNCTION - Search models by task (for More button)
   searchModels: async (task, limit = 5) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/tests/search-models`, {
-        params: { task, limit }
-      });
-      return response.data;
+      // Direct Hugging Face API call (more reliable)
+      const response = await axios.get(`https://huggingface.co/api/models?pipeline_tag=${task}&sort=downloads&limit=${limit}`);
+      
+      // Transform response to our format
+      return response.data.map(model => ({
+        id: model.id,
+        name: model.id.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        task: task,
+        isDynamic: true,
+        downloads: model.downloads || 0,
+        likes: model.likes || 0
+      }));
     } catch (error) {
       console.error('Search failed:', error);
+      return [];
+    }
+  },
+
+  // 🟢 NEW FUNCTION 1 - Search models by query (for search input)
+  searchModelsByQuery: async (query) => {
+    try {
+      // Direct Hugging Face API call
+      const response = await axios.get(`https://huggingface.co/api/models?search=${encodeURIComponent(query)}&limit=15`);
+      
+      // Transform response
+      return response.data.map(model => {
+        // Determine task from pipeline_tag
+        let task = 'unknown';
+        if (model.pipeline_tag) {
+          if (model.pipeline_tag.includes('sentiment') || model.pipeline_tag.includes('text-classification')) {
+            task = 'sentiment';
+          } else if (model.pipeline_tag.includes('zero-shot')) {
+            task = 'zero-shot';
+          } else if (model.pipeline_tag.includes('text-generation')) {
+            task = 'text-generation';
+          } else if (model.pipeline_tag.includes('translation')) {
+            task = 'translation';
+          } else {
+            task = model.pipeline_tag;
+          }
+        }
+        
+        return {
+          id: model.id,
+          name: model.id.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          task: task,
+          isDynamic: true,
+          downloads: model.downloads || 0,
+          likes: model.likes || 0
+        };
+      });
+    } catch (error) {
+      console.error('Query search failed:', error);
+      return [];
+    }
+  },
+
+  // 🟢 NEW FUNCTION 2 - Get models by task with dynamic loading
+  getDynamicModels: async (task, limit = 5) => {
+    try {
+      // Try backend first
+      try {
+        const response = await axios.get(`${API_BASE_URL}/tests/models`, {
+          params: { task, includeDynamic: true }
+        });
+        if (response.data.success && response.data.data.length > 0) {
+          return response.data.data;
+        }
+      } catch (backendError) {
+        console.log('Backend fetch failed, trying direct HF API');
+      }
+      
+      // Fallback to direct Hugging Face API
+      return await api.searchModels(task, limit);
+    } catch (error) {
+      console.error('Get dynamic models failed:', error);
       return [];
     }
   }
