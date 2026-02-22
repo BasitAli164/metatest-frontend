@@ -25,37 +25,12 @@ function App() {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [apiStatus, setApiStatus] = useState('checking');
 
   // Handle model updates from ModelSelector (when loading more models)
   const handleModelsUpdate = (updatedModels) => {
     setModels(updatedModels);
     toast.success(`Model list updated: ${updatedModels.length} total models`);
   };
-
-  // Check API connection
-  useEffect(() => {
-    const checkApiConnection = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/health');
-        if (response.ok) {
-          setApiStatus('connected');
-          toast.success('Connected to backend API');
-        } else {
-          setApiStatus('disconnected');
-          toast.error('Backend API is not responding properly');
-        }
-      } catch (error) {
-        setApiStatus('disconnected');
-        toast.error('Cannot connect to backend. Make sure server is running on port 5000');
-      }
-    };
-    
-    checkApiConnection();
-    const interval = setInterval(checkApiConnection, 30000); // Check every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     fetchModels();
@@ -156,9 +131,6 @@ function App() {
                 </h1>
                 <p className="text-xs text-gray-500 hidden sm:block">AI Metamorphic Testing Platform</p>
               </div>
-              <span className={`badge ${apiStatus === 'connected' ? 'badge-success' : 'badge-danger'} hidden sm:inline-flex`}>
-                {apiStatus === 'connected' ? '● API Connected' : '○ API Disconnected'}
-              </span>
             </div>
 
             {/* Desktop Navigation */}
@@ -199,11 +171,6 @@ function App() {
           <div className="md:hidden bg-gray-800/95 backdrop-blur-xl border-t border-gray-700">
             <div className="container mx-auto px-4 py-4">
               <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className={`badge ${apiStatus === 'connected' ? 'badge-success' : 'badge-danger'}`}>
-                    {apiStatus === 'connected' ? '● API Connected' : '○ API Disconnected'}
-                  </span>
-                </div>
                 <div className="flex items-center space-x-4">
                   <Shield className="w-4 h-4 text-primary-400" />
                   <span className="text-sm text-gray-300">Research Grade</span>
