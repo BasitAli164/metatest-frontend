@@ -132,7 +132,33 @@ const api = {
       console.error('Get dynamic models failed:', error);
       return [];
     }
+  },
+  // Add this new function
+getMRTypes: async (category = '') => {
+  try {
+    const url = category 
+      ? `${API_BASE_URL}/tests/mr-types?category=${category}`
+      : `${API_BASE_URL}/tests/mr-types`;
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch MR types:', error);
+    // Fallback to static list
+    return {
+      success: true,
+      data: [
+        { value: 'SYNONYM', label: 'Synonym Replacement', icon: '🔄' },
+        { value: 'GENDER_SWAP', label: 'Gender Swap', icon: '⚥' },
+        { value: 'PUNCTUATION', label: 'Punctuation', icon: '❗' },
+        { value: 'NEGATION', label: 'Negation', icon: '🚫' },
+        { value: 'PARAPHRASE', label: 'Paraphrase', icon: '📝' }
+      ]
+    };
   }
+},
+
+  
 };
+
 
 export default api;
